@@ -9,7 +9,7 @@ export default function Page() {
 
   return (
     <div>
-      <h1>Socket Example Test </h1>
+      <h1 className={classes["h1"]}>Socket Example Test </h1>
       <div>
         <input
           onChange={(e) => setMessage(e.target.value)}
@@ -23,7 +23,7 @@ export default function Page() {
           Send
         </button>
       </div>
-      <div>
+      <div className={classes["messages"]}>
         {messages.map((e) => (
           <li>{e}</li>
         ))}
