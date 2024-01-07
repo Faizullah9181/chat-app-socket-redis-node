@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
-import prismaClient from "./prisma";
+import {produceMessage} from "./kafka";
 const pub = new Redis({
   port: 6379, // Redis port
   host: "127.0.0.1", // Redis host
@@ -45,11 +45,7 @@ class SocketService {
       if (channel === "MESSAGES") {
         console.log("new message from redis", message);
         io.emit("message", message);
-        await prismaClient.message.create({
-          data: {
-            text: message,
-          },
-        });
+        await produceMessage(message);
       }
     });
   }
