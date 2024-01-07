@@ -1,11 +1,19 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
-
+import prismaClient from "./prisma";
 const pub = new Redis({
-
+  port: 6379, // Redis port
+  host: "127.0.0.1", // Redis host
+  username: "default", // needs Redis >= 6
+  password: "mypass",
+  db: 0, // Defaults to 0
 });
 const sub = new Redis({
-
+  port: 6379, // Redis port
+  host: "127.0.0.1", // Redis host
+  username: "default", // needs Redis >= 6
+  password: "mypass",
+  db: 0, // Defaults to 0
 });
 
 class SocketService {
@@ -37,6 +45,11 @@ class SocketService {
       if (channel === "MESSAGES") {
         console.log("new message from redis", message);
         io.emit("message", message);
+        await prismaClient.message.create({
+          data: {
+            text: message,
+          },
+        });
       }
     });
   }
