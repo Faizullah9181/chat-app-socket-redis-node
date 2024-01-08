@@ -1,23 +1,11 @@
 import { Server } from "socket.io";
-import Redis from "ioredis";
-import {produceMessage} from "./kafka";
-const pub = new Redis({
-  port: 6379, // Redis port
-  host: "127.0.0.1", // Redis host
-  username: "default", // needs Redis >= 6
-  password: "mypass",
-  db: 0, // Defaults to 0
-});
-const sub = new Redis({
-  port: 6379, // Redis port
-  host: "127.0.0.1", // Redis host
-  username: "default", // needs Redis >= 6
-  password: "mypass",
-  db: 0, // Defaults to 0
-});
+import RedisService from "./redis";
+import { produceMessage } from "./kafka";
 
 class SocketService {
   private _io: Server;
+  protected sub = RedisService.redisInstance;
+  protected pub = RedisService.redisInstance;
 
   constructor() {
     console.log("SocketService");
@@ -27,7 +15,12 @@ class SocketService {
         allowedHeaders: ["*"],
       },
     });
-    sub.subscribe("MESSAGES");
+
+    this.sub.subscribe("MESSAGES");
+  }
+
+  get io() {
+    return this._io;
   }
 
   public initListeners() {
@@ -37,21 +30,18 @@ class SocketService {
 
       socket.on("event:message", async ({ message }: { message: string }) => {
         console.log("New Message Rec.", JSON.stringify({ message }));
-        await pub.publish("MESSAGES", JSON.stringify({ message }));
+
+        this.pub.publish("MESSAGES", JSON.stringify({ message }));
       });
     });
 
-    sub.on("message", async (channel, message) => {
+    this.sub.on("message", async (channel: any, message: any) => {
       if (channel === "MESSAGES") {
         console.log("new message from redis", message);
         io.emit("message", message);
         await produceMessage(message);
       }
     });
-  }
-
-  get io() {
-    return this._io;
   }
 }
 
